@@ -1,0 +1,4 @@
+experiment_id,date,owner,model_name,params,train_score,val_score,test_score,metrics_used,time_taken,notes
+E001,2025-04-15,Alex,LightGBM,"{learning_rate:0.1,max_depth:6}",0.905,0.823,,"[""AUC""",30 min,
+E002,2025-04-16,Priya,LightGBM,"{learning_rate:0.05,max_depth:5}",0.91,0.829,,"[""AUC""",1 hr,Performs well!
+E003,2025-04-17,Zain,LightGBM,{target_encoding:True},0.912,0.835,,"[""AUC""]",20m,Target encoding helps with cardinality
