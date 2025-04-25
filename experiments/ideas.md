@@ -11,12 +11,33 @@ compare:
 then:
 as we decrease n, at what point do the final fitess (as assessed by an actual trianing run on the final performance) intersect? what is the computational overhead for both methods at that point?
 
-# Idea 3:
-25/04 - zero cost proxy local search:
+Sure! Here's your text with grammar and clarity improvements, while keeping your original intent and ideas intact:
 
-we could look into local search in zero cost proxies, see how the accuracy scores compare between:
-- zero cost proxy 
-- zero proxy + local search (changing some aspect of the child and then reevaluating it's score) --> to do: see how similar this is to actually existing ensemble proxies 
-- zero cost proxy + minitraining (=lopez)
 
--> about local search: look at parameter sharing, check: https://arxiv.org/pdf/1802.03268 
+# Idea 3:  
+**25/04 – Zero-Cost Proxy Local Search**
+
+We could explore local search techniques using zero-cost proxies and compare their effectiveness across the following settings:
+- Standard zero-cost proxy (baseline)
+- Zero-cost proxy + local search: Slightly perturb the child architecture (e.g., mutate layer type or connection) and reevaluate its proxy score.  
+  → To-do: investigate how this compares to existing ensemble proxy strategies.
+- Zero-cost proxy + mini-training (as in Lopes et al., 2024)
+
+> Regarding local search: explore parameter sharing as a way to accelerate proxy evaluations. See:  [DARTS: Differentiable Architecture Search (2018)](https://arxiv.org/pdf/1802.03268)
+
+---
+
+# Idea 4:  
+**25/04 – Dynamic Proxy NAS**
+
+We could design an ENAS method that adapts the proxy it uses during search, based on either:
+- A time/compute budget, or
+- A performance threshold (e.g., proxy score saturation, plateauing accuracy)
+
+The idea is:  
+- At the beginning of search, when we're far from optimal solutions, we use fast and simple proxies (e.g., SynFlow, GradNorm).  
+- As search progresses and we get closer to promising architectures, we gradually switch to more accurate but expensive proxies (e.g., Jacobian Covariance, NTK, ensemble methods).
+
+Hypothesis:
+> This adaptive approach will achieve higher final accuracy than using only simple proxies, while requiring fewer resources than using complex or ensemble proxies from the start.
+
