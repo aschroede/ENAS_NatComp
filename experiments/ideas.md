@@ -10,3 +10,13 @@ compare:
 2. evolution with training for n epochs and then for assessing fitness
 then:
 as we decrease n, at what point do the final fitess (as assessed by an actual trianing run on the final performance) intersect? what is the computational overhead for both methods at that point?
+
+# Idea 3:
+25/04 - zero cost proxy local search:
+
+we could look into local search in zero cost proxies, see how the accuracy scores compare between:
+- zero cost proxy 
+- zero proxy + local search (changing some aspect of the child and then reevaluating it's score) --> to do: see how similar this is to actually existing ensemble proxies 
+- zero cost proxy + minitraining (=lopez)
+
+-> about local search: look at parameter sharing, check: https://arxiv.org/pdf/1802.03268 
