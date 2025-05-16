@@ -182,7 +182,247 @@ You get two ranked lists of architectures. --> Then you compute the Kendall Tau 
 - Rank correlation matrices across datasets
 - Venn diagrams of top-k architectures per proxy
 
+---
 
+# 4: Grammar-Based Search Space
+
+> Purpose: Explore how generalizing the architecture search space using a grammar-based approach affects the types of architectures discovered through ENAS, and whether they resemble known architectures like CNNs, RNNs, or Transformers.
+
+---
+
+## Objective
+Determine whether an evolutionary algorithm with a grammar-based search space can rediscover or approximate known high-performing architectures (e.g., ResNet, Transformer).
+
+---
+
+## Research Question
+Can ENAS using a grammar-defined architecture space evolve models structurally similar to known architectures?
+
+---
+
+## Hypothesis
+Using a grammar-based search space allows the evolutionary algorithm to explore a wider design space and converge on architectures resembling known performant models.
+
+
+## Model(s)
+ENAS using:
+- Lopez-style fixed cell-based search space (baseline)
+- Grammar-defined architecture generator (experimental)
+
+---
+
+## Parameters to Search
+| Parameter        | Range      | Search Method |
+| ---------------- | ---------- | ------------- |
+| Production rules | Custom set | Manual design |
+| Population size  | 20–50      | Grid          |
+| Mutation rate    | 0.1–0.5    | Grid          |
+
+
+---
+
+## Datasets / Splits
+- NAS-Bench-101 or CIFAR-10 (for tractability)
+- Grammar search space tested with synthetic or small benchmark data
+
+---
+
+## Metrics / Benchmarks
+
+| Metric                  | Target Value | Baseline          |
+| ----------------------- | ------------ | ----------------- |
+| Final Val Accuracy      | > baseline   | Lopez ENAS        |
+| Structure Similarity    | Qualitative  | N/A               |
+| Diversity of Top Models | High         | Lower in baseline |
+
+---
+
+## Visualizations
+- Architecture diagrams of top-evolved models
+- Similarity heatmaps (e.g., edit distance to known architectures)
+- Rule usage frequency plots
+
+---
+
+# 5: Partial Training VS Proxy
+
+> Purpose: Determine the accuracy-efficiency tradeoff between zero-cost proxy evaluations and partial training during fitness estimation in ENAS.
+
+---
+
+## Objective
+Identify the point at which partial training becomes as informative as proxy-guided fitness, and assess relative computational costs.
+ 
+
+---
+
+## Research Question
+At what training budget (n epochs) does using partial training match or outperform proxy-based fitness in ENAS?
+
+---
+
+## Hypothesis
+There exists a small number of epochs (e.g., 5–10) beyond which partial training offers better accuracy than proxy evaluation, but at higher computational cost.
+
+
+---
+
+## Model(s)
+ENAS with:
+- Proxy-only fitness (e.g., SynFlow)
+- Partial training with various n values (e.g., n = 1, 3, 5, 10)
+
+---
+
+## Parameters to Search
+| Parameter       | Range            | Search Method |
+| --------------- | ---------------- | ------------- |
+| n (epochs)      | 1–10             | Grid          |
+| Population size | Fixed (e.g., 30) | Manual        |
+
+
+---
+
+## Datasets / Splits
+- CIFAR-10 (or NAS-Bench-201 subset)
+- Hold-out validation for architecture evaluation
+
+---
+
+## Metrics / Benchmarks
+
+| Metric                | Target Value     | Baseline        |
+| --------------------- | ---------------- | --------------- |
+| Final Val Accuracy    | As good as proxy | Proxy-only ENAS |
+| Search Time           | < full training  | Proxy baseline  |
+| Cost-efficiency Ratio | Higher is better | Proxy baseline  |
+
+---
+
+## Visualizations
+- Accuracy vs. training epochs curves
+- Compute cost vs. accuracy trade-off plot
+- Side-by-side architecture performance table
+
+---
+
+# 6: Local Search
+
+> Purpose: Explore whether applying local search after proxy scoring improves architecture selection during evolution.
+
+---
+
+## Objective
+Test whether small perturbations to top-ranked architectures improve proxy-based architecture selection in ENAS.
+
+---
+
+## Research Question
+Does applying local mutations and re-evaluation (local search) improve the reliability of proxy-guided selection?
+
+---
+
+## Hypothesis
+Local search helps refine fitness estimates from noisy proxies by finding nearby architectures with more stable or higher proxy scores.
+
+---
+
+## Model(s)
+ENAS with:
+- Proxy-only
+- Proxy + local search (mutate and re-score top candidate)
+- Proxy + mini-training (Lopez-style partial evaluation)
+
+---
+
+## Parameters to Search
+
+| Parameter        | Range    | Search Method |
+| ---------------- | -------- | ------------- |
+| Num local tweaks | 1–5      | Grid          |
+| Proxy type       | Multiple | Manual        |
+
+
+---
+
+## Datasets / Splits
+- NAS-Bench-201 CIFAR-10
+- Training run for validation accuracy check
+
+---
+
+## Metrics / Benchmarks
+
+| Metric                 | Target Value | Current Baseline |
+| ---------------------- | ------------ | ---------------- |
+| Final Accuracy         | > proxy-only | Varies           |
+| Search Time            | < mini-train |                  |
+| Local improvement rate | > 0          | —                |
+
+---
+
+## Visualizations
+- Proxy score before vs. after local tweaks
+- Accuracy histograms of final models
+- Time vs. accuracy trade-offs
+
+---
+# 7: Dynamic Proxies
+
+> Purpose: Evaluate whether adapting proxy complexity over time improves ENAS search efficiency and final performance.
+
+---
+
+## Objective
+Design and test a dynamic ENAS algorithm that changes its proxy evaluation strategy as the search progresses. 
+
+---
+
+## Research Question
+Can a schedule-based proxy switching mechanism yield better trade-offs between accuracy and computational cost?
+
+---
+
+## Hypothesis
+Using fast proxies early and expensive proxies later will result in better accuracy than using only simple proxies and lower cost than always using complex proxies.
+
+---
+
+## Model(s)
+ENAS with:
+- Static simple proxy (e.g., SynFlow)
+- Static complex proxy (e.g., Jacobian Covariance)
+- Dynamic switching strategy
+
+---
+
+## Parameters to Search
+| Parameter         | Range  | Search Method |
+| ----------------- | ------ | ------------- |
+| Switch generation | 5–15   | Grid          |
+| Proxy order       | Manual | Fixed         |
+
+
+---
+
+## Datasets / Splits
+NAS-Bench-201 CIFAR-10
+
+---
+
+## Metrics / Benchmarks
+| Metric             | Target Value   | Baseline      |
+| ------------------ | -------------- | ------------- |
+| Final Accuracy     | > static proxy | Proxy-only    |
+| Total Compute Time | < complex-only | Complex proxy |
+
+
+---
+
+## Visualizations
+- Accuracy vs. generation curves for each proxy strategy
+- Proxy usage timeline (bar chart)
+- Cost vs. performance plot
 
 
 
