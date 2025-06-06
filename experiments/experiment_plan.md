@@ -73,6 +73,7 @@ Do proxy ensembles outperform single proxies in guiding evolutionary search effi
 
 ## Hypothesis
 AZ-NAS and UP-NAS will achieve higher-performing architectures within fewer generations than individual proxies.
+Alternatively / in addition to existing ensemble proxies such as UP-NAS and AZ-NAS we could also build our own ensemble proxy by combining the "winner" simple proxied from experiment 1.
 
 ## Hypothesis justification
 Single proxies can be noisy or biased toward certain architecture traits. For example, SynFlow is known to underperform on deep networks.
@@ -118,133 +119,7 @@ manually swap proxy type, fix population size and generations.
 
 ---
 
-# 3: Generalization Across Datasets
-
-> Purpose: Evaluate if proxy rankings remain consistent across different tasks.
-
----
-
-## Objective
-Test each proxy's robustness when applied to multiple datasets with different complexity. - here we can for example compare the best ones we found in experiments 1 and 2 and see which ones generalize best.  
-
----
-
-## Research Question
-Do proxy rankings stay consistent across CIFAR-10, CIFAR-100, and TinyImageNet?
-
----
-
-## Hypothesis
-Jacobian and NTK-based proxies will generalize better across datasets compared to GradNorm or ZiCo.
-
-## hypothesis justification
-Data-dependent proxies may perform well on the dataset they’re calibrated for, but generalize poorly across tasks.
-Both ZiCo and GradNorm rely on actual data and gradients (GradNorm computes gradients on a real batch of inputs, ZiCo looks at the variance and mean of gradients, which are highly dependent on how the data is distributed.)
-Changing from CIFAR-10 to CIFAR-100 or TinyImageNet means that the input statistics and class distributions change — and  proxies like ZiCo and GradNorm may respond very differently, leading to instability in rankings.
-Proxies like SynFlow or Jacobian Covariance operate more on network structure or dynamics and should generalize better across datasets.
----
-
-## Model(s)
-- NAS-Bench-201 architectures (evaluated on multiple datasets)
-
----
-
-## Parameters to Search
-| Parameter       | Range     | Search Method |
-|----------------|-----------|---------------|
-| Dataset         | 3 values  | Manual swap   |
-
----
-
-## Datasets / Splits
-- NAS-Bench-201 CIFAR-10
-- NAS-Bench-201 CIFAR-100
-- NAS-Bench-201 TinyImageNet
-
----
-
-## Metrics / Benchmarks
-| Metric             | Target Value | Current Baseline |
-|--------------------|--------------|------------------|
-| Rank Stability     | > 0.7 (tau)  | varies           |
-| Cross-set Accuracy | ~91–95%      | varies           |
-
-
-Rank Stability measures how consistent a proxy's ranking of architectures is across different datasets: You evaluate a set of architectures on Dataset 1 and Dataset 2 using the same proxy. -->
-You get two ranked lists of architectures. --> Then you compute the Kendall Tau or Spearman correlation between the two rankings:
-<0 - inversely ranked
-~0 - uncorrelated rankings
-.>7 - good agreement
-1 - perfectly consistent ranks
----
-
-## Visualizations
-- Rank correlation matrices across datasets
-- Venn diagrams of top-k architectures per proxy
-
----
-
-# 4: Grammar-Based Search Space
-
-> Purpose: Explore how generalizing the architecture search space using a grammar-based approach affects the types of architectures discovered through ENAS, and whether they resemble known architectures like CNNs, RNNs, or Transformers.
-
----
-
-## Objective
-Determine whether an evolutionary algorithm with a grammar-based search space can rediscover or approximate known high-performing architectures (e.g., ResNet, Transformer).
-
----
-
-## Research Question
-Can ENAS using a grammar-defined architecture space evolve models structurally similar to known architectures?
-
----
-
-## Hypothesis
-Using a grammar-based search space allows the evolutionary algorithm to explore a wider design space and converge on architectures resembling known performant models.
-
-
-## Model(s)
-ENAS using:
-- Lopez-style fixed cell-based search space (baseline)
-- Grammar-defined architecture generator (experimental)
-
----
-
-## Parameters to Search
-| Parameter        | Range      | Search Method |
-| ---------------- | ---------- | ------------- |
-| Production rules | Custom set | Manual design |
-| Population size  | 20–50      | Grid          |
-| Mutation rate    | 0.1–0.5    | Grid          |
-
-
----
-
-## Datasets / Splits
-- NAS-Bench-101 or CIFAR-10 (for tractability)
-- Grammar search space tested with synthetic or small benchmark data
-
----
-
-## Metrics / Benchmarks
-
-| Metric                  | Target Value | Baseline          |
-| ----------------------- | ------------ | ----------------- |
-| Final Val Accuracy      | > baseline   | Lopez ENAS        |
-| Structure Similarity    | Qualitative  | N/A               |
-| Diversity of Top Models | High         | Lower in baseline |
-
----
-
-## Visualizations
-- Architecture diagrams of top-evolved models
-- Similarity heatmaps (e.g., edit distance to known architectures)
-- Rule usage frequency plots
-
----
-
-# 5: Partial Training VS Proxy
+# 3: Partial Training VS Proxy
 
 > Purpose: Determine the accuracy-efficiency tradeoff between zero-cost proxy evaluations and partial training during fitness estimation in ENAS.
 
@@ -304,70 +179,9 @@ ENAS with:
 - Compute cost vs. accuracy trade-off plot
 - Side-by-side architecture performance table
 
----
-
-# 6: Local Search
-
-> Purpose: Explore whether applying local search after proxy scoring improves architecture selection during evolution.
 
 ---
-
-## Objective
-Test whether small perturbations to top-ranked architectures improve proxy-based architecture selection in ENAS.
-
----
-
-## Research Question
-Does applying local mutations and re-evaluation (local search) improve the reliability of proxy-guided selection?
-
----
-
-## Hypothesis
-Local search helps refine fitness estimates from noisy proxies by finding nearby architectures with more stable or higher proxy scores.
-
----
-
-## Model(s)
-ENAS with:
-- Proxy-only
-- Proxy + local search (mutate and re-score top candidate)
-- Proxy + mini-training (Lopez-style partial evaluation)
-
----
-
-## Parameters to Search
-
-| Parameter        | Range    | Search Method |
-| ---------------- | -------- | ------------- |
-| Num local tweaks | 1–5      | Grid          |
-| Proxy type       | Multiple | Manual        |
-
-
----
-
-## Datasets / Splits
-- NAS-Bench-201 CIFAR-10
-- Training run for validation accuracy check
-
----
-
-## Metrics / Benchmarks
-
-| Metric                 | Target Value | Current Baseline |
-| ---------------------- | ------------ | ---------------- |
-| Final Accuracy         | > proxy-only | Varies           |
-| Search Time            | < mini-train |                  |
-| Local improvement rate | > 0          | —                |
-
----
-
-## Visualizations
-- Proxy score before vs. after local tweaks
-- Accuracy histograms of final models
-- Time vs. accuracy trade-offs
-
----
-# 7: Dynamic Proxies
+# 4 (EXTRA): Dynamic Proxies
 
 > Purpose: Evaluate whether adapting proxy complexity over time improves ENAS search efficiency and final performance.
 
