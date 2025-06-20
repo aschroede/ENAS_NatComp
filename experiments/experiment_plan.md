@@ -1,242 +1,207 @@
-# 1: Correlation of simple proxy scores with True Performance of a model
+Here is your updated experiment plan file rewritten to reflect the three final experiments based on your detailed descriptions, following the standard template:
 
-> Purpose: Identify which proxies most accurately predict final architecture accuracy without training.
+---
+
+# Experiment 1: Evolutionary Hyperparameter Sweep with Single Proxies
+
+> Purpose: Assess how ENAS performance varies under different hyperparameter settings and proxy functions.
 
 ---
 
 ## Objective
-Quantify the relationship between each proxy's score and the true validation accuracy of architectures from a benchmark dataset.
+
+Evaluate the robustness of ENAS when guided by different single-proxy fitness functions across a wide hyperparameter space.
 
 ---
 
 ## Research Question
-Which zero-cost proxy best correlates with true validation accuracy across a diverse set of architectures? 
----
 
-## Hypothesis
-Jacobian Covariance and NTK will show higher rank correlation with accuracy than simpler proxies like Parameter Count or SynFlow.
-
-### Hypothesis explanation/justification
-Jacobian Covariance measures how diverse and expressive the model's responses are to input changes, which is closely related to learnability and generalization.
-NTK (Neural Tangent Kernel) gives a theoretical approximation of the training dynamics under gradient descent — it reflects how well a model can fit random labels (trainability) and generalize.
-These proxies are more sensitive to architectural expressiveness, unlike SynFlow, which only measures signal flow in a linearized version, and Parameter Count, which doesn’t consider learning dynamics at all.
-Therefore, the more expressive proxies are expected to better track real performance, especially as networks get deeper and more complex.
-
----
-
-## Model(s)
-- NAS-Bench-201 architectures (predefined set)
-
----
-
-## Parameters to Search
-/
-
----
-
-## Datasets / Splits
-- NAS-Bench-201 (or any CIFAR-10 subset)
-- Use precomputed validation accuracy
-
----
-
-## Metrics / Benchmarks
-for example we could look at:
-| Metric               | Target Value | Current Baseline |
-|----------------------|--------------|------------------|
-| Spearman Correlation | > 0.5        | varies by proxy  |
-| Pearson Correlation  | > 0.5        | varies by proxy  |
-
----
-
-## Visualizations
-- Correlation scatter plots
-- Rank-order bar graphs
-
----
-
-# 2: Comparing simple proxies to ensemble proxies 
-
-> Purpose: Measure how well different proxies guide ENAS toward high-performing architectures within fixed compute budget.
-
----
-
-## Objective
-Compare the final architecture performance when ENAS is guided by different proxies.
-
----
-
-## Research Question
-Do proxy ensembles outperform single proxies in guiding evolutionary search efficiency?
+How do different zero-cost proxies affect the performance of ENAS under varying population sizes, mutation/crossover rates, and generations?
 
 ---
 
 ## Hypothesis
-AZ-NAS and UP-NAS will achieve higher-performing architectures within fewer generations than individual proxies.
-Alternatively / in addition to existing ensemble proxies such as UP-NAS and AZ-NAS we could also build our own ensemble proxy by combining the "winner" simple proxied from experiment 1.
 
-## Hypothesis justification
-Single proxies can be noisy or biased toward certain architecture traits. For example, SynFlow is known to underperform on deep networks.
-Combining proxies helps balance out individual weaknesses. For example: AZ-NAS aggregates multiple scores using a rank-based method.
-Reducing noise in the fitness signal should lead to fewer missteps and faster convergence.
+Proxies with strong correlation to true accuracy (e.g., ZiCo, SynFlow) will consistently lead ENAS to better architectures, even under varying hyperparameters.
 
 ---
 
 ## Model(s)
-- ENAS using:
-  - SynFlow
-  - GradNorm
-  - NTK
-  - Jacobian Covariance
-  - AZ-NAS ensemble
+
+* ENAS (custom)
+* NAS-Bench-201 search space (CIFAR-100)
 
 ---
 
 ## Parameters to Search
 
-manually swap proxy type, fix population size and generations.
+| Parameter       | Range                             | Search Method |
+| --------------- | --------------------------------- | ------------- |
+| Proxy           | 12 values (SynFlow, ZiCo, AZNAS…) | Manual grid   |
+| Population Size | {4, 8, 16, 32, 64}                | Random        |
+| Generations     | {2, 5, 10, 20}                    | Random        |
+| Mutation Rate   | 0.05 – 0.5                        | Uniform       |
+| Crossover Rate  | {0, 0.25, 0.5, 0.8}               | Random        |
+| Seed            | \[0, 99999]                       | Uniform       |
 
 ---
 
 ## Datasets / Splits
-- NAS-Bench-201 CIFAR-10
-- Custom ENAS runs
+
+* NAS-Bench-201
+* CIFAR-100
+* 200-epoch ground truth accuracy used as oracle
 
 ---
 
 ## Metrics / Benchmarks
-| Metric             | Target Value      | Current Baseline |
-|--------------------|-------------------|------------------|
-| Final Val Accuracy | > 90ish?             | tbd, gotta look at papers again             |
-| Search Time        | < 2 hours?         | varies           |
+
+| Metric          | Target Value      | Baseline |
+| --------------- | ----------------- | -------- |
+| Final Accuracy  | > 70% (CIFAR-100) | \~65%    |
+| Proxy Stability | High              | Varies   |
+| Runtime         | < 10 minutes/run  | ✔        |
 
 ---
 
 ## Visualizations
-- Accuracy vs. generation curves
-- Proxy score vs. true performance plots
-- Runtime comparison
+
+* Accuracy vs. proxy plots
+* Hyperparameter impact heatmaps
+* Top-k architecture comparisons
 
 ---
 
-# 3: Partial Training VS Proxy
+# Experiment 2: Proxy Ensembling and Correlation Analysis
 
-> Purpose: Determine the accuracy-efficiency tradeoff between zero-cost proxy evaluations and partial training during fitness estimation in ENAS.
+> Purpose: Discover effective combinations of proxies that provide stronger predictive signals and guide ENAS better than any single proxy.
 
 ---
 
 ## Objective
-Identify the point at which partial training becomes as informative as proxy-guided fitness, and assess relative computational costs.
- 
+
+Analyze the correlation structure of simple proxies and develop ensemble proxies that improve architecture selection.
 
 ---
 
 ## Research Question
-At what training budget (n epochs) does using partial training match or outperform proxy-based fitness in ENAS?
+
+Which combinations of first-order proxies provide the best correlation to ground-truth accuracy, and how can they be effectively aggregated?
 
 ---
 
 ## Hypothesis
-There exists a small number of epochs (e.g., 5–10) beyond which partial training offers better accuracy than proxy evaluation, but at higher computational cost.
 
+Ensembles that combine proxies from diverse categories (e.g., expressivity, trainability, complexity) will outperform single proxies like SynFlow or ZiCo in both correlation and NAS performance.
 
 ---
 
 ## Model(s)
-ENAS with:
-- Proxy-only fitness (e.g., SynFlow)
-- Partial training with various n values (e.g., n = 1, 3, 5, 10)
+
+* Proxy rank-based ensemble models (e.g., AZNAS, softmax-aggregated)
+* NAS-Bench-201 architectures
 
 ---
 
 ## Parameters to Search
-| Parameter       | Range            | Search Method |
-| --------------- | ---------------- | ------------- |
-| n (epochs)      | 1–10             | Grid          |
-| Population size | Fixed (e.g., 30) | Manual        |
 
+| Parameter     | Range               | Search Method |
+| ------------- | ------------------- | ------------- |
+| Ensemble Def. | 7 fixed definitions | Manual        |
+| Aggregator    | AZ, Softmax (α=1.0) | Manual        |
 
 ---
 
 ## Datasets / Splits
-- CIFAR-10 (or NAS-Bench-201 subset)
-- Hold-out validation for architecture evaluation
+
+* NAS-Bench-201
+* CIFAR-10 (primary)
+* CIFAR-100, ImageNet16-120 (for generalization)
 
 ---
 
 ## Metrics / Benchmarks
 
-| Metric                | Target Value     | Baseline        |
-| --------------------- | ---------------- | --------------- |
-| Final Val Accuracy    | As good as proxy | Proxy-only ENAS |
-| Search Time           | < full training  | Proxy baseline  |
-| Cost-efficiency Ratio | Higher is better | Proxy baseline  |
+| Metric                | Target Value | Baseline |
+| --------------------- | ------------ | -------- |
+| Spearman’s ρ          | > 0.75       | \~0.55   |
+| Kendall’s τ           | > 0.7        | \~0.5    |
+| Test Accuracy (top-1) | \~93%        | \~91–92% |
 
 ---
 
 ## Visualizations
-- Accuracy vs. training epochs curves
-- Compute cost vs. accuracy trade-off plot
-- Side-by-side architecture performance table
 
+* Proxy-proxy correlation matrix
+* Ground truth vs. ensemble proxy scatterplots
+* Aggregator comparison plots
 
 ---
-# 4 (EXTRA): Dynamic Proxies
 
-> Purpose: Evaluate whether adapting proxy complexity over time improves ENAS search efficiency and final performance.
+# Experiment 3: ENAS with Ensemble Proxies
+
+> Purpose: Test whether ensemble proxies lead to better architecture discovery in actual ENAS runs.
 
 ---
 
 ## Objective
-Design and test a dynamic ENAS algorithm that changes its proxy evaluation strategy as the search progresses. 
+
+Run ENAS guided by ensemble proxies and compare final architecture performance against baseline proxies and the original AZNAS design.
 
 ---
 
 ## Research Question
-Can a schedule-based proxy switching mechanism yield better trade-offs between accuracy and computational cost?
+
+Can our proposed ensembles (e.g., Ensemble Four) improve over AZNAS and guide ENAS to higher-performing architectures?
 
 ---
 
 ## Hypothesis
-Using fast proxies early and expensive proxies later will result in better accuracy than using only simple proxies and lower cost than always using complex proxies.
+
+Ensemble Four and Ensemble Five will outperform the original AZNAS when used to guide selection in ENAS, especially with the softmax aggregator.
 
 ---
 
 ## Model(s)
-ENAS with:
-- Static simple proxy (e.g., SynFlow)
-- Static complex proxy (e.g., Jacobian Covariance)
-- Dynamic switching strategy
+
+* ENAS (custom implementation)
+* Proxy-driven fitness selection
 
 ---
 
 ## Parameters to Search
-| Parameter         | Range  | Search Method |
-| ----------------- | ------ | ------------- |
-| Switch generation | 5–15   | Grid          |
-| Proxy order       | Manual | Fixed         |
 
+| Parameter  | Values                | Search Method |
+| ---------- | --------------------- | ------------- |
+| Ensemble   | {zero, one, ..., six} | Manual grid   |
+| Aggregator | {AZ, Softmax (α=1.0)} | Manual        |
+| Seed       | {0–10}                | Manual        |
 
 ---
 
 ## Datasets / Splits
-NAS-Bench-201 CIFAR-10
+
+* NAS-Bench-201
+* CIFAR-100 (fixed splits)
 
 ---
 
 ## Metrics / Benchmarks
-| Metric             | Target Value   | Baseline      |
-| ------------------ | -------------- | ------------- |
-| Final Accuracy     | > static proxy | Proxy-only    |
-| Total Compute Time | < complex-only | Complex proxy |
 
+| Metric         | Target Value     | Baseline  |
+| -------------- | ---------------- | --------- |
+| Final Accuracy | > AZNAS baseline | AZNAS     |
+| Proxy Runtime  | < 200ms/arch     | 79ms (AZ) |
+| Generalization | High             | Variable  |
 
 ---
 
 ## Visualizations
-- Accuracy vs. generation curves for each proxy strategy
-- Proxy usage timeline (bar chart)
-- Cost vs. performance plot
 
+* Accuracy distribution over seeds
+* Proxy runtime comparison
+* Proxy–accuracy correlation plots per ensemble
 
+---
 
+Let me know if you'd like a LaTeX version or Beamer slides based on this layout!
